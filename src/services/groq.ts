@@ -1,71 +1,56 @@
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_BACKEND_URL ||
-  "http://localhost:5000";
+const BACKEND_URL = "https://studyai-backend-p7ew.onrender.com";
 
 export async function askGroq(prompt: string) {
-  try {
-    const response = await fetch(`${BACKEND_URL}/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt,
-      }),
-    });
+try {
+const response = await fetch(`${BACKEND_URL}/chat`, {
+method: "POST",
+headers: {
+"Content-Type": "application/json",
+},
+body: JSON.stringify({
+prompt,
+}),
+});
 
-    const data = await response.json();
 
-    if (!response.ok) {
-      return data.error || "Server Error";
-    }
+const data = await response.json();
 
-    return data.reply || "No response from StudyAI.";
-  } catch (error: any) {
-    console.error("askGroq error:", error);
+if (!response.ok) {
+  return data.error || "Server Error";
+}
 
-    return (
-      error?.message ||
-      "Unable to connect to StudyAI backend."
-    );
-  }
+return data.reply || "No response from StudyAI.";
+
+} catch (error: any) {
+console.error("askGroq error:", error);
+return error?.message || "Unable to connect to StudyAI backend.";
+}
 }
 
 export async function askHomework(imageUri: string) {
-  try {
-    const formData = new FormData();
+try {
+const formData = new FormData();
 
-    const blob = await fetch(imageUri).then(
-      (response) => response.blob()
-    );
+const blob = await fetch(imageUri).then((response) => response.blob());
 
-    formData.append(
-      "image",
-      blob,
-      "homework.jpg"
-    );
+formData.append("image", blob, "homework.jpg");
 
-    const response = await fetch(
-      `${BACKEND_URL}/homework`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+const response = await fetch(`${BACKEND_URL}/homework`, {
+  method: "POST",
+  body: formData,
+});
 
-    const data = await response.json();
+const data = await response.json();
 
-    if (!response.ok) {
-      return data.error || "Server Error";
-    }
+if (!response.ok) {
+  return data.error || "Server Error";
+}
 
-    return data.reply || "No answer received.";
-  } catch (error: any) {
-    console.error("askHomework error:", error);
+return data.reply || "No answer received.";
 
-    return (
-      error?.message ||
-      "Unable to connect to Homework Scanner."
-    );
-  }
+
+} catch (error: any) {
+console.error("askHomework error:", error);
+return error?.message || "Unable to connect to Homework Scanner.";
+}
 }
