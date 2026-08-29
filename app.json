@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "StudyAI",
+    "slug": "studyai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "scheme": "studyai",
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "android": {
+      "package": "com.studyai.app"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "bee2ebf2-098e-4a1f-bc2e-2223325c399f"
+      }
+    }
+  }
+}
