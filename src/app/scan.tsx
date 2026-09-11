@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { useState } from "react";
 import {
@@ -12,9 +11,7 @@ import {
   View,
 } from "react-native";
 import { askHomework } from "../services/groq";
-
-const HOMEWORK_COUNT_KEY = "homework_count";
-const ACTIVITY_COUNT_KEY = "studyai_activity_count";
+import { addProgress } from "../services/progress";
 
 export default function ScanScreen() {
   const [image, setImage] = useState<string | null>(null);
@@ -31,7 +28,10 @@ export default function ScanScreen() {
           quality: 0.9,
         });
 
-      if (!result.canceled && result.assets?.length > 0) {
+      if (
+        !result.canceled &&
+        result.assets?.length > 0
+      ) {
         setImage(result.assets[0].uri);
         setAnswer("");
         setCounted(false);
@@ -42,59 +42,6 @@ export default function ScanScreen() {
       Alert.alert(
         "Error",
         "Could not choose the homework image."
-      );
-    }
-  }
-
-  async function saveHomeworkProgress() {
-    try {
-      // Get current homework count
-      const savedHomeworkCount =
-        await AsyncStorage.getItem(
-          HOMEWORK_COUNT_KEY
-        );
-
-      const oldHomeworkCount = Number(
-        savedHomeworkCount || "0"
-      );
-
-      // Increase homework count by 1
-      await AsyncStorage.setItem(
-        HOMEWORK_COUNT_KEY,
-        String(oldHomeworkCount + 1)
-      );
-
-      // Get total activity count
-      const savedActivityCount =
-        await AsyncStorage.getItem(
-          ACTIVITY_COUNT_KEY
-        );
-
-      const oldActivityCount = Number(
-        savedActivityCount || "0"
-      );
-
-      // Increase total study activities by 1
-      await AsyncStorage.setItem(
-        ACTIVITY_COUNT_KEY,
-        String(oldActivityCount + 1)
-      );
-
-      console.log(
-        "Homework progress saved:",
-        oldHomeworkCount + 1
-      );
-
-      console.log(
-        "Study activities saved:",
-        oldActivityCount + 1
-      );
-
-      setCounted(true);
-    } catch (error) {
-      console.log(
-        "Could not save homework progress:",
-        error
       );
     }
   }
@@ -112,8 +59,6 @@ export default function ScanScreen() {
     setAnswer("");
 
     try {
-      // Send homework image to the existing
-      // working vision function.
       const response = await askHomework(image);
 
       if (!response || response.trim() === "") {
@@ -124,9 +69,24 @@ export default function ScanScreen() {
 
       setAnswer(response);
 
-      // Only count this homework once.
+      // Save homework activity to Supabase.
+      // This is separate so a progress error
+      // does not break the homework answer.
       if (!counted) {
-        await saveHomeworkProgress();
+        try {
+          await addProgress("homework");
+
+          setCounted(true);
+
+          console.log(
+            "Homework progress saved."
+          );
+        } catch (error) {
+          console.log(
+            "Could not save homework progress:",
+            error
+          );
+        }
       }
     } catch (error) {
       console.log(
@@ -176,8 +136,6 @@ export default function ScanScreen() {
         </TouchableOpacity>
       ) : (
         <>
-          {/* IMAGE PREVIEW */}
-
           <View style={styles.imageCard}>
             <Image
               source={{ uri: image }}
@@ -185,8 +143,6 @@ export default function ScanScreen() {
               resizeMode="contain"
             />
           </View>
-
-          {/* IMAGE BUTTONS */}
 
           <View style={styles.buttonRow}>
             <TouchableOpacity
@@ -209,8 +165,6 @@ export default function ScanScreen() {
               </Text>
             </TouchableOpacity>
           </View>
-
-          {/* SOLVE BUTTON */}
 
           <TouchableOpacity
             style={[
@@ -240,8 +194,6 @@ export default function ScanScreen() {
           </TouchableOpacity>
         </>
       )}
-
-      {/* ANSWER */}
 
       {answer ? (
         <View style={styles.answerCard}>
@@ -277,8 +229,6 @@ export default function ScanScreen() {
           </Text>
         </View>
       ) : null}
-
-      {/* TIP */}
 
       <View style={styles.tipCard}>
         <Text style={styles.tipTitle}>

@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -11,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { askGroq } from "../services/groq";
+import { addProgress } from "../services/progress";
 
 type Question = {
   question: string;
@@ -18,10 +18,6 @@ type Question = {
   answer: number;
   explanation: string;
 };
-
-const QUIZ_COUNT_KEY = "studyai_quiz_count";
-const OLD_QUIZ_COUNT_KEY = "quiz_count";
-const ACTIVITY_COUNT_KEY = "studyai_activity_count";
 
 export default function QuizScreen() {
   const [topic, setTopic] = useState("");
@@ -115,7 +111,37 @@ Rules:
             typeof item.explanation === "string"
           );
         })
-        .slice(0, 10);
+        .slice(0, 10)
+        .map((item: Question, questionIndex: number) => {
+          const correctAnswer = item.options[item.answer];
+
+          const wrongAnswers = item.options.filter(
+            (_, index) => index !== item.answer
+          );
+
+          // Spread correct answers across A, B, C and D.
+          // Question 1 = A
+          // Question 2 = B
+          // Question 3 = C
+          // Question 4 = D
+          // Then repeat.
+          const correctPosition = questionIndex % 4;
+
+          const newOptions = [...wrongAnswers];
+
+          newOptions.splice(
+            correctPosition,
+            0,
+            correctAnswer
+          );
+
+          return {
+            question: item.question,
+            options: newOptions,
+            answer: correctPosition,
+            explanation: item.explanation,
+          };
+        });
 
       if (validQuestions.length !== 10) {
         throw new Error(
@@ -157,52 +183,9 @@ Rules:
 
   async function saveQuizProgress() {
     try {
-      // New StudyAI quiz count
-      const savedQuizCount =
-        await AsyncStorage.getItem(
-          QUIZ_COUNT_KEY
-        );
+      await addProgress("quiz");
 
-      const quizCount =
-        Number(savedQuizCount || "0");
-
-      await AsyncStorage.setItem(
-        QUIZ_COUNT_KEY,
-        String(quizCount + 1)
-      );
-
-      // Keep the older key working too
-      const oldSavedQuizCount =
-        await AsyncStorage.getItem(
-          OLD_QUIZ_COUNT_KEY
-        );
-
-      const oldQuizCount =
-        Number(oldSavedQuizCount || "0");
-
-      await AsyncStorage.setItem(
-        OLD_QUIZ_COUNT_KEY,
-        String(oldQuizCount + 1)
-      );
-
-      // Increase total study activities
-      const savedActivityCount =
-        await AsyncStorage.getItem(
-          ACTIVITY_COUNT_KEY
-        );
-
-      const activityCount =
-        Number(savedActivityCount || "0");
-
-      await AsyncStorage.setItem(
-        ACTIVITY_COUNT_KEY,
-        String(activityCount + 1)
-      );
-
-      console.log(
-        "Quiz progress saved:",
-        quizCount + 1
-      );
+      console.log("Quiz progress saved.");
     } catch (error) {
       console.log(
         "Could not save quiz progress:",
@@ -237,10 +220,6 @@ Rules:
     setFinished(false);
   }
 
-  // -------------------------
-  // LOADING
-  // -------------------------
-
   if (loading) {
     return (
       <View style={styles.center}>
@@ -263,10 +242,6 @@ Rules:
       </View>
     );
   }
-
-  // -------------------------
-  // FINISHED
-  // -------------------------
 
   if (finished) {
     return (
@@ -306,10 +281,6 @@ Rules:
       </View>
     );
   }
-
-  // -------------------------
-  // QUESTIONS
-  // -------------------------
 
   if (questions.length > 0) {
     const question = questions[current];
@@ -447,10 +418,6 @@ Rules:
       </ScrollView>
     );
   }
-
-  // -------------------------
-  // START SCREEN
-  // -------------------------
 
   return (
     <ScrollView

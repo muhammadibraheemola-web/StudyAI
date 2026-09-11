@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import {
@@ -9,11 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-
-const QUIZ_COUNT_KEY = "quiz_count";
-const NOTES_COUNT_KEY = "studyai_notes_count";
-const FLASHCARD_COUNT_KEY = "flashcard_count";
-const HOMEWORK_COUNT_KEY = "homework_count";
+import { getProgress } from "../services/progress";
 
 export default function ProgressScreen() {
   const [quizCount, setQuizCount] = useState(0);
@@ -33,38 +28,13 @@ export default function ProgressScreen() {
 
   async function loadProgress() {
     try {
-      const [
-        savedQuizCount,
-        savedNotesCount,
-        savedFlashcardCount,
-        savedHomeworkCount,
-      ] = await Promise.all([
-        AsyncStorage.getItem(QUIZ_COUNT_KEY),
-        AsyncStorage.getItem(NOTES_COUNT_KEY),
-        AsyncStorage.getItem(FLASHCARD_COUNT_KEY),
-        AsyncStorage.getItem(HOMEWORK_COUNT_KEY),
-      ]);
+      const progress = await getProgress();
 
-      const quizzes = Number(savedQuizCount || "0");
-      const notes = Number(savedNotesCount || "0");
-      const flashcards = Number(
-        savedFlashcardCount || "0"
-      );
-      const homework = Number(
-        savedHomeworkCount || "0"
-      );
-
-      const totalActivities =
-        quizzes +
-        notes +
-        flashcards +
-        homework;
-
-      setQuizCount(quizzes);
-      setNotesCount(notes);
-      setFlashcardCount(flashcards);
-      setHomeworkCount(homework);
-      setActivityCount(totalActivities);
+      setQuizCount(progress.quizCount);
+      setNotesCount(progress.notesCount);
+      setFlashcardCount(progress.flashcardCount);
+      setHomeworkCount(progress.homeworkCount);
+      setActivityCount(progress.activityCount);
     } catch (error) {
       console.log(
         "Could not load progress:",
@@ -146,11 +116,7 @@ export default function ProgressScreen() {
         />
       }
     >
-      {/* HEADER */}
-
-      <Text style={styles.emoji}>
-        📊
-      </Text>
+      <Text style={styles.emoji}>📊</Text>
 
       <Text style={styles.title}>
         My Progress
@@ -159,8 +125,6 @@ export default function ProgressScreen() {
       <Text style={styles.subtitle}>
         Keep learning and watch your progress grow.
       </Text>
-
-      {/* TOTAL */}
 
       <View style={styles.totalCard}>
         <Text style={styles.totalEmoji}>
@@ -180,8 +144,6 @@ export default function ProgressScreen() {
         </Text>
       </View>
 
-      {/* STAT CARDS */}
-
       <View style={styles.statsContainer}>
         {stats.map((stat) => (
           <View
@@ -199,7 +161,9 @@ export default function ProgressScreen() {
                 {stat.title}
               </Text>
 
-              <Text style={styles.statDescription}>
+              <Text
+                style={styles.statDescription}
+              >
                 {stat.description}
               </Text>
             </View>
@@ -210,8 +174,6 @@ export default function ProgressScreen() {
           </View>
         ))}
       </View>
-
-      {/* MOTIVATION */}
 
       <View style={styles.motivationCard}>
         <Text style={styles.motivationEmoji}>
@@ -228,8 +190,6 @@ export default function ProgressScreen() {
           becoming a stronger learner.
         </Text>
       </View>
-
-      {/* REFRESH NOTE */}
 
       <Text style={styles.refreshText}>
         Pull down to refresh your progress.

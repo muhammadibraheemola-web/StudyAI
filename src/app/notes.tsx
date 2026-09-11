@@ -11,6 +11,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { addProgress } from "../services/progress";
+import { supabase } from "../services/supabase";
 
 type Note = {
   id: string;
@@ -19,9 +21,17 @@ type Note = {
   createdAt: string;
 };
 
-const NOTES_KEY = "studyai_notes";
-const NOTES_COUNT_KEY = "studyai_notes_count";
-const ACTIVITY_COUNT_KEY = "studyai_activity_count";
+async function getUserNotesKey() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return "studyai_notes_guest";
+  }
+
+  return `studyai_notes_${user.id}`;
+}
 
 export default function NotesScreen() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -36,7 +46,8 @@ export default function NotesScreen() {
 
   async function loadNotes() {
     try {
-      const saved = await AsyncStorage.getItem(NOTES_KEY);
+      const notesKey = await getUserNotesKey();
+      const saved = await AsyncStorage.getItem(notesKey);
 
       if (saved) {
         const parsed = JSON.parse(saved);
@@ -44,39 +55,11 @@ export default function NotesScreen() {
         if (Array.isArray(parsed)) {
           setNotes(parsed);
         }
+      } else {
+        setNotes([]);
       }
     } catch (error) {
       console.log("Could not load notes:", error);
-    }
-  }
-
-  async function increaseStudyActivity() {
-    try {
-      const savedNotesCount = await AsyncStorage.getItem(
-        NOTES_COUNT_KEY
-      );
-
-      const savedActivityCount = await AsyncStorage.getItem(
-        ACTIVITY_COUNT_KEY
-      );
-
-      const notesCount = Number(savedNotesCount || "0");
-      const activityCount = Number(savedActivityCount || "0");
-
-      await AsyncStorage.setItem(
-        NOTES_COUNT_KEY,
-        String(notesCount + 1)
-      );
-
-      await AsyncStorage.setItem(
-        ACTIVITY_COUNT_KEY,
-        String(activityCount + 1)
-      );
-    } catch (error) {
-      console.log(
-        "Could not update study activity:",
-        error
-      );
     }
   }
 
@@ -85,15 +68,24 @@ export default function NotesScreen() {
     isNewNote: boolean
   ) {
     try {
+      const notesKey = await getUserNotesKey();
+
       await AsyncStorage.setItem(
-        NOTES_KEY,
+        notesKey,
         JSON.stringify(updatedNotes)
       );
 
       setNotes(updatedNotes);
 
       if (isNewNote) {
-        await increaseStudyActivity();
+        try {
+          await addProgress("note");
+        } catch (error) {
+          console.log(
+            "Could not save note progress:",
+            error
+          );
+        }
       }
     } catch (error) {
       console.log("Could not save notes:", error);
@@ -168,12 +160,14 @@ export default function NotesScreen() {
   async function deleteNote(id: string) {
     const remove = async () => {
       try {
+        const notesKey = await getUserNotesKey();
+
         const updatedNotes = notes.filter(
           (note) => note.id !== id
         );
 
         await AsyncStorage.setItem(
-          NOTES_KEY,
+          notesKey,
           JSON.stringify(updatedNotes)
         );
 

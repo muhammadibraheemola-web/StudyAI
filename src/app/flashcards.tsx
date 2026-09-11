@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState } from "react";
 import {
   ActivityIndicator,
@@ -11,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { askGroq } from "../services/groq";
+import { addProgress } from "../services/progress";
 
 type Flashcard = {
   question: string;
@@ -87,25 +87,16 @@ Rules:
 
       setCards(validCards);
 
-      const saved = await AsyncStorage.getItem(
-        "studyai_activity_count"
-      );
-
-      const count = Number(saved || "0");
-
-      await AsyncStorage.setItem(
-        "studyai_activity_count",
-        String(count + 1)
-      );
-
-      await AsyncStorage.setItem(
-        "flashcard_count",
-        String(
-          (Number(
-            await AsyncStorage.getItem("flashcard_count")
-          ) || 0) + 1
-        )
-      );
+      // Save this activity to the logged-in/guest user's Progress.
+      // A database error should not make successful flashcard generation fail.
+      try {
+        await addProgress("flashcard");
+      } catch (error) {
+        console.log(
+          "Could not save flashcard progress:",
+          error
+        );
+      }
     } catch (error) {
       console.log("Flashcard error:", error);
 

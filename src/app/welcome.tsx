@@ -1,5 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import {
   StyleSheet,
   Text,
@@ -10,33 +10,42 @@ import {
 export default function WelcomeScreen() {
   async function getStarted() {
     try {
-      await SecureStore.setItemAsync(
+      await AsyncStorage.setItem(
         "studyai_has_started",
         "true"
       );
 
-      router.replace("/");
+      router.replace("/auth");
     } catch (error) {
       console.log("Could not save startup setting:", error);
 
-      // Still allow the user to enter the app
-      router.replace("/");
+      router.replace("/auth");
     }
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.topGlow} />
+      {/* Background glow */}
+      <View style={styles.glowTop} />
+      <View style={styles.glowBottom} />
 
       <View style={styles.content}>
-        {/* StudyAI Logo */}
-        <View style={styles.logoContainer}>
-          <Text style={styles.logo}>📚</Text>
+        {/* Logo */}
+        <View style={styles.logoOuter}>
+          <View style={styles.logoInner}>
+            <Text style={styles.logo}>📚</Text>
+          </View>
         </View>
 
-        <Text style={styles.title}>
-          StudyAI
-        </Text>
+        {/* Brand */}
+        <Text style={styles.title}>StudyAI</Text>
+
+        <View style={styles.aiBadge}>
+          <View style={styles.dot} />
+          <Text style={styles.aiBadgeText}>
+            AI-POWERED LEARNING
+          </Text>
+        </View>
 
         <Text style={styles.subtitle}>
           Learn Smarter with AI
@@ -50,32 +59,44 @@ export default function WelcomeScreen() {
         {/* Features */}
         <View style={styles.features}>
           <View style={styles.feature}>
-            <Text style={styles.featureIcon}>
-              🤖
-            </Text>
+            <View style={styles.featureIconBox}>
+              <Text style={styles.featureIcon}>🤖</Text>
+            </View>
 
-            <Text style={styles.featureText}>
+            <Text style={styles.featureTitle}>
               Ask AI
             </Text>
-          </View>
 
-          <View style={styles.feature}>
-            <Text style={styles.featureIcon}>
-              🧠
-            </Text>
-
-            <Text style={styles.featureText}>
-              Quiz
+            <Text style={styles.featureDescription}>
+              Get answers
             </Text>
           </View>
 
           <View style={styles.feature}>
-            <Text style={styles.featureIcon}>
-              📚
+            <View style={styles.featureIconBox}>
+              <Text style={styles.featureIcon}>🧠</Text>
+            </View>
+
+            <Text style={styles.featureTitle}>
+              Practice
             </Text>
 
-            <Text style={styles.featureText}>
+            <Text style={styles.featureDescription}>
+              Quiz & learn
+            </Text>
+          </View>
+
+          <View style={styles.feature}>
+            <View style={styles.featureIconBox}>
+              <Text style={styles.featureIcon}>📚</Text>
+            </View>
+
+            <Text style={styles.featureTitle}>
               Study
+            </Text>
+
+            <Text style={styles.featureDescription}>
+              Stay organized
             </Text>
           </View>
         </View>
@@ -83,14 +104,19 @@ export default function WelcomeScreen() {
         {/* Get Started */}
         <TouchableOpacity
           style={styles.button}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
           onPress={getStarted}
         >
           <Text style={styles.buttonText}>
-            Get Started 🚀
+            Get Started
+          </Text>
+
+          <Text style={styles.buttonArrow}>
+            →
           </Text>
         </TouchableOpacity>
 
+        {/* Footer */}
         <Text style={styles.footer}>
           Built for learners everywhere 🌍
         </Text>
@@ -102,113 +128,200 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0F172A",
+    backgroundColor: "#050B18",
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
+    overflow: "hidden",
   },
 
-  topGlow: {
+  glowTop: {
     position: "absolute",
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: "#1D4ED8",
-    opacity: 0.12,
-    top: -80,
+    width: 360,
+    height: 360,
+    borderRadius: 180,
+    backgroundColor: "#2563EB",
+    opacity: 0.13,
+    top: -170,
+    right: -100,
+  },
+
+  glowBottom: {
+    position: "absolute",
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: "#38BDF8",
+    opacity: 0.06,
+    bottom: -140,
+    left: -100,
   },
 
   content: {
     width: "100%",
-    maxWidth: 500,
+    maxWidth: 520,
     alignItems: "center",
   },
 
-  logoContainer: {
-    width: 150,
-    height: 150,
-    borderRadius: 40,
-    backgroundColor: "#1E293B",
+  logoOuter: {
+    width: 142,
+    height: 142,
+    borderRadius: 38,
+    backgroundColor: "#0B1730",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 18,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: "#2563EB",
+    marginBottom: 20,
+    shadowOpacity: 0.25,
+    shadowRadius: 25,
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+  },
+
+  logoInner: {
+    width: 112,
+    height: 112,
+    borderRadius: 30,
+    backgroundColor: "#111F3A",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   logo: {
-    fontSize: 78,
+    fontSize: 64,
   },
 
   title: {
-    color: "#38BDF8",
-    fontSize: 46,
-    fontWeight: "bold",
+    color: "#FFFFFF",
+    fontSize: 44,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+
+  aiBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0B1730",
+    borderWidth: 1,
+    borderColor: "#1D4ED8",
+    borderRadius: 30,
+    paddingHorizontal: 13,
+    paddingVertical: 6,
+    marginTop: 10,
+  },
+
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: "#22C55E",
+    marginRight: 7,
+  },
+
+  aiBadgeText: {
+    color: "#60A5FA",
+    fontSize: 10,
+    fontWeight: "800",
     letterSpacing: 1,
   },
 
   subtitle: {
-    color: "#FFFFFF",
+    color: "#38BDF8",
     fontSize: 21,
-    fontWeight: "600",
-    marginTop: 5,
+    fontWeight: "700",
+    marginTop: 18,
   },
 
   description: {
-    color: "#CBD5E1",
-    fontSize: 17,
-    lineHeight: 27,
+    color: "#94A3B8",
+    fontSize: 16,
+    lineHeight: 25,
     textAlign: "center",
-    marginTop: 18,
-    maxWidth: 420,
+    marginTop: 12,
+    maxWidth: 430,
   },
 
   features: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    marginTop: 30,
-    marginBottom: 30,
+    marginTop: 28,
+    marginBottom: 28,
+    gap: 10,
   },
 
   feature: {
-    backgroundColor: "#1E293B",
+    flex: 1,
+    backgroundColor: "#0D1729",
     borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    width: "31%",
+    paddingVertical: 15,
+    paddingHorizontal: 8,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#1E293B",
+  },
+
+  featureIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "#111F3A",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 9,
   },
 
   featureIcon: {
-    fontSize: 28,
-    marginBottom: 7,
+    fontSize: 24,
   },
 
-  featureText: {
+  featureTitle: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "bold",
+    fontWeight: "700",
+  },
+
+  featureDescription: {
+    color: "#64748B",
+    fontSize: 11,
+    marginTop: 4,
   },
 
   button: {
     width: "100%",
     backgroundColor: "#2563EB",
-    paddingVertical: 18,
-    borderRadius: 16,
+    minHeight: 58,
+    borderRadius: 17,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
-    marginTop: 5,
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
   },
 
   buttonText: {
     color: "#FFFFFF",
-    fontSize: 19,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: "800",
+  },
+
+  buttonArrow: {
+    color: "#FFFFFF",
+    fontSize: 25,
+    fontWeight: "500",
+    marginLeft: 12,
   },
 
   footer: {
-    color: "#64748B",
-    fontSize: 13,
-    marginTop: 25,
+    color: "#475569",
+    fontSize: 12,
+    marginTop: 20,
   },
 });

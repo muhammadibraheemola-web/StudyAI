@@ -9,13 +9,14 @@ export default function Layout() {
       <Stack
         screenOptions={{
           headerShown: false,
-          animation: "slide_from_right",
           contentStyle: {
-            backgroundColor: "#0F172A",
+            backgroundColor: "#050B18",
           },
+          animation: "slide_from_right",
         }}
       >
         <Stack.Screen name="welcome" />
+        <Stack.Screen name="auth" />
         <Stack.Screen name="index" />
         <Stack.Screen name="ai" />
         <Stack.Screen name="scan" />
@@ -25,6 +26,8 @@ export default function Layout() {
         <Stack.Screen name="calculator" />
         <Stack.Screen name="explore" />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="pro" />
+        <Stack.Screen name="progress" />
       </Stack>
     </>
   );
