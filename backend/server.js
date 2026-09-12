@@ -210,11 +210,10 @@ app.post("/homework", upload.single("image"), async (req, res) => {
       `data:${req.file.mimetype};base64,${base64Image}`;
 
     // =====================================
-    // Ask vision model to understand homework
+    // Homework Vision Model
     // =====================================
 
     const completion = await groq.chat.completions.create({
-      // Updated vision model
       model: "qwen/qwen3.8-27b",
 
       messages: [
@@ -223,28 +222,19 @@ app.post("/homework", upload.single("image"), async (req, res) => {
           content: `
 You are StudyAI Homework Scanner.
 
-You are a friendly AI tutor for secondary school students.
+Analyze the homework image carefully.
 
-Look carefully at the homework image.
+For each visible question:
+1. Give the answer.
+2. Explain the main steps clearly in simple English.
 
-Identify the questions that are visible.
+For mathematics, show the important working.
 
-For each question:
+Keep the entire response concise and under 700 words.
 
-1. Write the question.
-2. Give the answer.
-3. Explain the solution step by step in simple English.
+If something is unclear, say so instead of guessing.
 
-If it is mathematics, show the working clearly.
-
-If part of the image is unclear, say that the question is unclear instead of inventing information.
-
-Use markdown.
-
-Do not simply give answers.
-Teach the student how to solve the problem.
-
-Be accurate and pay close attention to mathematical symbols, numbers, equations, and diagrams.
+Teach the student, don't just give answers.
 `,
         },
 
@@ -268,10 +258,22 @@ Be accurate and pay close attention to mathematical symbols, numbers, equations,
       ],
 
       temperature: 0.3,
-      max_completion_tokens: 4096,
+
+      // Groq currently limits this model to about
+      // 1000 output tokens per minute on the current tier.
+      max_completion_tokens: 900,
     });
 
     const reply = completion.choices[0].message.content;
+
+    if (!reply || !reply.trim()) {
+      return res.status(500).json({
+        success: false,
+        error: "The AI returned an empty homework explanation.",
+      });
+    }
+
+    console.log("✅ Homework analysis completed");
 
     res.json({
       success: true,
