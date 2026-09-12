@@ -196,10 +196,16 @@ app.post("/homework", upload.single("image"), async (req, res) => {
     console.log("📦 File size:", req.file.size);
     console.log("📝 File type:", req.file.mimetype);
 
+    // =====================================
     // Convert image to Base64
+    // =====================================
+
     const base64Image = req.file.buffer.toString("base64");
 
-    // Build data URL
+    // =====================================
+    // Build image data URL
+    // =====================================
+
     const imageDataUrl =
       `data:${req.file.mimetype};base64,${base64Image}`;
 
@@ -208,7 +214,8 @@ app.post("/homework", upload.single("image"), async (req, res) => {
     // =====================================
 
     const completion = await groq.chat.completions.create({
-      model: "qwen/qwen3.6-27b",
+      // Updated vision model
+      model: "qwen/qwen3.8-27b",
 
       messages: [
         {
@@ -223,6 +230,7 @@ Look carefully at the homework image.
 Identify the questions that are visible.
 
 For each question:
+
 1. Write the question.
 2. Give the answer.
 3. Explain the solution step by step in simple English.
@@ -233,13 +241,15 @@ If part of the image is unclear, say that the question is unclear instead of inv
 
 Use markdown.
 
-Do not simply give answers. Teach the student how to solve the problem.
+Do not simply give answers.
+Teach the student how to solve the problem.
+
+Be accurate and pay close attention to mathematical symbols, numbers, equations, and diagrams.
 `,
         },
 
         {
           role: "user",
-
           content: [
             {
               type: "text",
@@ -249,7 +259,6 @@ Do not simply give answers. Teach the student how to solve the problem.
 
             {
               type: "image_url",
-
               image_url: {
                 url: imageDataUrl,
               },
